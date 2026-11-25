@@ -8,3 +8,5 @@ https://tagschatten1.github.io/Spiele/spiel2.html
 https://tagschatten1.github.io/Spiele/spiel3.html
 
 https://tagschatten1.github.io/Spiele/spiel4.html
+
+https://tagschatten1.github.io/Spiele/spiel5.html
