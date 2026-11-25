@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>F-15C Desert Takeoff</title>
+<style>
+  body { margin:0; background:#0a1a2f; color:white; font-family:Arial; text-align:center; overflow:hidden }
+  canvas { background: linear-gradient(#87CEEB, #e8c9a0); display:block; margin:0 auto; border:3px solid #1e90ff }
+  #hud { padding:10px; font-size:18px; font-weight:bold }
+  button { padding:10px 20px; font-size:18px; background:#1e90ff; color:white; border:none; border-radius:8px; cursor:pointer }
+</style>
+</head>
+<body>
+<div id="hud">✈️ F-15C BLEU | Score: <span id="score">0</span> | Missiles: <span id="lives">3</span></div>
+<canvas id="game" width="800" height="450"></canvas><br>
+<button onclick="start()">🛫 DÉCOLLER</button>
+<p>Contrôles: ⬆️ ⬇️ ou souris pour monter/descendre. Évite les montagnes et attrape les AMRAAM !</p>
+<script>
+const c=document.getElementById('game'), ctx=c.getContext('2d');
+let plane={x:100,y:200,w:80,h:30}, vy=0, obstacles=[], bonuses=[], score=0, lives=3, playing=false, frame=0;
+function start(){ score=0; lives=3; obstacles=[]; bonuses=[]; plane.y=200; playing=true; loop(); }
+function loop(){
+ if(!playing) return;
+ frame++; ctx.clearRect(0,0,800,450);
+ // désert
+ ctx.fillStyle='#e8c9a0'; ctx.fillRect(0,380,800,70);
+ ctx.fillStyle='#8b7355'; for(let i=0;i<5;i++) ctx.fillRect(i*200 - (frame%200), 350, 100, 30);
+ // avion F-15 bleu
+ ctx.save(); ctx.translate(plane.x, plane.y);
+ ctx.fillStyle='#4a8bd4'; ctx.beginPath(); ctx.moveTo(0,15); ctx.lineTo(70,5); ctx.lineTo(80,15); ctx.lineTo(70,25); ctx.closePath(); ctx.fill();
+ ctx.fillStyle='#2a5fa0'; ctx.fillRect(20,0,30,10);
+ ctx.fillStyle='#ff8c00'; ctx.fillRect(-10,10,15,10); // postcombustion
+ ctx.restore();
+ // obstacles
+ if(frame%80===0) obstacles.push({x:800, y:Math.random()*350, w:40,h:50});
+ if(frame%150===0) bonuses.push({x:800, y:Math.random()*300});
+ ctx.fillStyle='#7a4a2a';
+ obstacles.forEach(o=>{ o.x-=5; ctx.fillRect(o.x,o.y,o.w,o.h); if(plane.x<o.x+o.w && plane.x+80>o.x && plane.y<o.y+o.h && plane.y+30>o.y){ lives--; obstacles=[]; document.getElementById('lives').innerText=lives; if(lives<=0){ playing=false; alert('CRASH! Score: '+score); } }});
+ ctx.fillStyle='#00ff00';
+ bonuses.forEach((b,i)=>{ b.x-=4; ctx.beginPath(); ctx.arc(b.x,b.y,12,0,Math.PI*2); ctx.fill(); if(Math.abs(b.x-plane.x)<40 && Math.abs(b.y-plane.y)<20){ score+=100; bonuses.splice(i,1);} });
+ score++; document.getElementById('score').innerText=score;
+ requestAnimationFrame(loop);
+}
+document.addEventListener('keydown',e=>{ if(e.key==='ArrowUp') plane.y-=20; if(e.key==='ArrowDown') plane.y+=20; });
+c.addEventListener('mousemove',e=>{ const r=c.getBoundingClientRect(); plane.y=e.clientY-r.top; });
+</script>
+</body>
+</html>
