@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>FC 26 - Real Madrid</title>
+<style>
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;background:#0a0a0a;color:white;font-family:Arial;overflow:hidden;touch-action:none}
+  #topBar{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:linear-gradient(90deg,#0a1e35,#1e3a5a);font-weight:bold;font-size:14px}
+  #scoreBoard{background:#000;padding:4px 12px;border-radius:6px;border:1px solid #00ff66}
+  canvas{width:100vw;height:54vh;display:block;background:#2e9a44}
+  #bottom{height:46vh;background:#111;display:flex;flex-direction:column;padding:6px;gap:6px}
+  #playerCard{display:flex;gap:8px;align-items:center;background:#1a1a1a;padding:6px 8px;border-radius:10px;border:1px solid #333}
+  #playerCard img{width:38px;height:38px;border-radius:50%;background:#fff}
+  .stat{flex:1;text-align:center;font-size:11px}
+  .stat b{font-size:14px;display:block}
+  #staminaBar{height:6px;background:#333;border-radius:3px;overflow:hidden;margin-top:3px}
+  #staminaFill{height:100%;width:100%;background:#00ff66;transition:width 0.2s}
+  #powerBar{height:10px;background:#333;border-radius:5px;overflow:hidden;display:none}
+  #powerFill{height:100%;width:0%;background:linear-gradient(90deg,green,yellow,red)}
+  #controls{display:flex;gap:8px;flex:1}
+  #joyZone{flex:1;display:flex;align-items:center;justify-content:center;position:relative;background:rgba(255,255,255,0.05);border-radius:16px;border:1px solid #333}
+  #joyBase{width:115px;height:115px;border-radius:50%;background:rgba(255,255,255,0.08);border:2px solid #555;position:relative}
+  #joyStick{width:50px;height:50px;border-radius:50%;background:#fff;border:3px solid #00ff66;position:absolute;left:32px;top:32px}
+  #btnZone{flex:1.5;display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .btn{border:none;border-radius:50%;aspect-ratio:1;max-width:68px;max-height:68px;margin:auto;font-size:11px;font-weight:900;color:white;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 0 rgba(0,0,0,0.5)}
+  .btn:active{transform:scale(0.9)}
+  .btn small{font-size:8px;font-weight:400}
+  #btnShoot{background:#e62e2e;width:72px;height:72px;font-size:14px;border:2px solid #ff8888}
+  #btnPass{background:#1e90ff} #btnThrough{background:#00aa55} #btnSkill{background:#e6a700;color:#000} #btnSprint{background:#fff;color:#000} #btnSwitch{background:#7a2bff}
+  #radar{position:absolute;top:58px;left:8px;width:90px;height:58px;background:rgba(0,0,0,0.6);border:1px solid #fff;border-radius:4px;z-index:5}
+  #skillPop{position:absolute;top:110px;left:50%;transform:translateX(-50%);font-size:20px;font-weight:900;color:#00ff66;text-shadow:2px 2px 0 #000;opacity:0;pointer-events:none;transition:opacity 0.3s;z-index:10;text-align:center}
+  #pcHelp{text-align:center;font-size:10px;color:#aaa;padding:2px}
+  kbd{background:#222;padding:1px 5px;border-radius:3px;border:1px solid #555}
+</style>
+</head>
+<body>
+<div id="topBar"><span>⚽ FC 26</span><div id="scoreBoard"><span style="color:#ffcc00">RMA</span> <span id="score">0 - 0</span> <span style="color:#ff3366">BAR</span> <span id="clock" style="margin-left:8px;color:#00ff66">12:00</span></div><span>DIV RIVALS</span></div>
+<div style="position:relative">
+<canvas id="game" width="1200" height="520"></canvas>
+<canvas id="radar" width="90" height="58"></canvas>
+<div id="skillPop"></div>
+</div>
+<div id="powerBar"><div id="powerFill"></div></div>
+<div id="bottom">
+  <div id="playerCard">
+    <div style="background:#fff;color:#000;width:42px;height:52px;border-radius:6px;text-align:center;font-weight:900;padding-top:4px">9<br><span style="font-size:18px">94</span><br><span style="font-size:8px">ST</span></div>
+    <div style="flex:1">
+      <div style="font-weight:bold;font-size:13px"><span id="playerName">KYLIAN MBAPPÉ</span> <span style="color:#00ff66;font-size:11px">● CONTRÔLÉ</span></div>
+      <div style="display:flex;gap:10px;font-size:10px;color:#aaa"><span>VIT <b style="color:white">97</b></span><span>TIR <b style="color:white">94</b></span><span>DRI <b style="color:white">97</b></span><span>PHY <b style="color:white">82</b></span></div>
+      <div id="staminaBar"><div id="staminaFill"></div></div>
+    </div>
+    <div class="stat"><b id="chem">33</b>CHIMIE</div>
+    <div class="stat"><b>ULTRA</b>DIFFICULTÉ</div>
+  </div>
+  <div id="pcHelp"><kbd>L-Stick</kbd> bouger • <kbd>R2</kbd> sprint • <kbd>□</kbd> tir • <kbd>X</kbd> passe • <kbd>△</kbd> en profondeur • <kbd>R1</kbd> skill • <kbd>L1</kbd> changer joueur • <kbd>ESPACE</kbd> tir • <kbd>SHIFT</kbd> sprint • <kbd>E</kbd> skill</div>
+  <div id="controls">
+    <div id="joyZone"><div id="joyBase"><div id="joyStick"></div></div></div>
+    <div id="btnZone">
+      <button class="btn" id="btnThrough" style="background:#00aa55">△<small>EN PROF.</small></button>
+      <button class="btn" id="btnShoot">CERCLE<small>TIR</small></button>
+      <button class="btn" id="btnSkill" style="background:#e6a700;color:#000">R1<small>SKILL</small></button>
+      <button class="btn" id="btnPass">X<small>PASSE</small></button>
+      <button class="btn" id="btnSprint">R2<small>SPRINT</small></button>
+      <button class="btn" id="btnSwitch" style="background:#7a2bff">L1<small>CHANGER</small></button>
+    </div>
+  </div>
+</div>
+
+<script>
+const c=document.getElementById('game'), ctx=c.getContext('2d');
+const radar=document.getElementById('radar'), rctx=radar.getContext('2d');
+let W=1200,H=520, camX=0, frame=0, playing=true, clockMin=12, clockSec=0;
+let stamina=100, sprinting=false, powerCharging=false, powerVal=0, skillCooldown=0;
+let keys={}, joyX=0, joyY=0;
+
+// FC 26 SQUAD - Real 4-3-3
+let team=[
+  {name:'MBAPPÉ',num:9,ovr:94,x:300,y:260,role:'ST',vit:97,tir:94,home:{x:300,y:260},color:'#fff'},
+  {name:'VINI JR',num:7,ovr:91,x:280,y:150,role:'LW',vit:96,tir:88,home:{x:280,y:150},color:'#fff'},
+  {name:'BELLINGHAM',num:5,ovr:90,x:380,y:360,role:'CM',vit:82,tir:84,home:{x:380,y:360},color:'#fff'},
+  {name:'VALVERDE',num:8,ovr:88,x:200,y:350,role:'CM',vit:88,tir:80,home:{x:200,y:350},color:'#fff'},
+  {name:'RÜDIGER',num:2,ovr:86,x:150,y:200,role:'CB',vit:70,tir:40,home:{x:150,y:200},color:'#fff'},
+];
+let opps=[
+  {name:'LEWANDOWSKI',x:900,y:260,vx:-0.8,home:{x:900,y:260}},
+  {name:'YAMAL',x:850,y:140,vx:-0.9,home:{x:850,y:140}},
+  {name:'PEDRI',x:800,y:360,vx:-0.7,home:{x:800,y:360}},
+  {name:'CUBARSI',x:700,y:200,vx:-0.5,home:{x:700,y:200}},
+  {name:'BALDE',x:700,y:320,vx:-0.6,home:{x:700,y:320}},
+];
+let keeper={x:1120,y:260,vy:1.5};
+let ball={x:400,y:260,vx:0,vy:0,owner:0}, controlled=0, scoreRMA=0, scoreBAR=0, particles=[], trails=[];
+let audioCtx=null;
+function initAudio(){ if(audioCtx) return; audioCtx=new (window.AudioContext||window.webkitAudioContext)(); }
+function beep(f,d=0.08,v=0.15){ if(!audioCtx) return; let o=audioCtx.createOscillator(),g=audioCtx.createGain(); o.type='sine'; o.frequency.value=f; g.gain.value=v; o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+d); }
+function playKick(p=1){ beep(120+Math.random()*40,0.12,0.2*p); }
+function playCrowd(){ if(!audioCtx) return; let b=audioCtx.createBuffer(1,audioCtx.sampleRate*0.9,audioCtx.sampleRate), d=b.getChannelData(0); for(let i=0;i<d.length;i++) d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.2); let s=audioCtx.createBufferSource(); s.buffer=b; let g=audioCtx.createGain(); g.gain.value=0.4; s.connect(g); g.connect(audioCtx.destination); s.start(); }
+function showSkill(t){ let e=document.getElementById('skillPop'); e.innerHTML=t; e.style.opacity=1; setTimeout(()=>e.style.opacity=0,900); }
+
+function doSkill(){
+  if(skillCooldown>0||!playing) return;
+  skillCooldown=45; let p=team[controlled];
+  let skills=['ROULETTE !','ELASTICO !','LA CROQUETA !','STEPOVER x3 !','RABONA FAKE !'];
+  showSkill('✨ '+skills[Math.floor(Math.random()*skills.length)]);
+  beep(800,0.1,0.2); setTimeout(()=>beep(1000,0.1,0.2),80);
+  // effet : repousse défenseurs
+  opps.forEach(o=>{ let d=Math.hypot(o.x-p.x,o.y-p.y); if(d<90){ o.x+= (o.x-p.x)/d*60; o.y+= (o.y-p.y)/d*60; } });
+  // petit boost
+  p.x+= (joyX||1)*25; p.y+= joyY*25;
+  for(let i=0;i<12;i++) trails.push({x:p.x,y:p.y,vx:(Math.random()-0.5)*4,vy:(Math.random()-0.5)*4,life:18,color:'#ffd700'});
+}
+
+function switchPlayer(){
+  let best=-1,bestD=999;
+  team.forEach((p,i)=>{ if(i===controlled) return; let d=Math.hypot(p.x-ball.x,p.y-ball.y); if(d<bestD){ bestD=d; best=i; } });
+  if(best>=0){ controlled=best; document.getElementById('playerName').innerText=team[controlled].name+' '+team[controlled].ovr; beep(500,0.05,0.1); }
+}
+function shootBall(){
+  let p=team[controlled];
+  let power=powerVal/100; if(power<0.2) power=0.5;
+  let dirX=1, dirY=(keeper.y-p.y)*0.002 + (Math.random()-0.5)*0.2;
+  ball.vx=(10+power*12)*dirX; ball.vy=dirY*12;
+  ball.owner=-1; playKick(power+0.5); showSkill(power>0.8?'💥 FRAPPE PUISSANTE !':'⚽ TIR !');
+  document.getElementById('powerBar').style.display='none'; powerVal=0; powerCharging=false;
+}
+function passBall(through=false){
+  let p=team[controlled];
+  // trouve coéquipier devant
+  let best=null,bestD=999;
+  team.forEach((t,i)=>{ if(i===controlled) return; let dx=t.x-p.x; if(dx<10) return; let d=Math.hypot(t.x-p.x,t.y-p.y); if(d<bestD){ bestD=d; best=t; } });
+  if(!best) return;
+  let tx=best.x, ty=best.y;
+  if(through){ tx+=80; ty+= (Math.random()-0.5)*60; }
+  let dx=tx-ball.x, dy=ty-ball.y, dist=Math.hypot(dx,dy);
+  ball.vx=dx/dist* (through?12:8); ball.vy=dy/dist*(through?12:8); ball.owner=-1;
+  playKick(0.6); showSkill(through?'△ EN PROFONDEUR !':'➡️ PASSE');
+  setTimeout(()=>{ let idx=team.indexOf(best); if(idx>=0){ controlled=idx; document.getElementById('playerName').innerText=best.name; } }, 350);
+}
+
+function update(){
+  frame++; skillCooldown=Math.max(0,skillCooldown-1);
+  if(frame%60===0){ clockSec++; if(clockSec>=60){ clockSec=0; clockMin++; } document.getElementById('clock').innerText=clockMin+':'+String(clockSec).padStart(2,'0'); }
+  // stamina FC 26
+  if(sprinting && (joyX||joyY||keys['ArrowUp']||keys['ArrowDown']||keys['ArrowLeft']||keys['ArrowRight'])) stamina=Math.max(0,stamina-0.35);
+  else stamina=Math.min(100,stamina+0.25);
+  document.getElementById('staminaFill').style.width=stamina+'%';
+  document.getElementById('staminaFill').style.background=stamina>30?'#00ff66':'#ff3333';
+
+  // power charge
+  if(powerCharging){ powerVal=Math.min(100,powerVal+2.5); document.getElementById('powerFill').style.width=powerVal+'%'; }
+
+  let p=team[controlled];
+  let speed=(sprinting && stamina>5?5.2:3.2) * (p.vit/90);
+  let mx=0,my=0;
+  if(keys['ArrowLeft']||keys['a']) mx-=1;
+  if(keys['ArrowRight']||keys['d']) mx+=1;
+  if(keys['ArrowUp']||keys['w']) my-=1;
+  if(keys['ArrowDown']||keys['s']) my+=1;
+  mx+=joyX; my+=joyY;
+  let len=Math.hypot(mx,my); if(len>1){ mx/=len; my/=len; }
+  p.x+=mx*speed; p.y+=my*speed;
+  p.x=Math.max(30,Math.min(1170,p.x)); p.y=Math.max(30,Math.min(490,p.y));
+
+  // coéquipiers IA - appels
+  team.forEach((t,i)=>{ if(i===controlled) return; let dx=t.home.x-t.x, dy=t.home.y-t.y; t.x+=dx*0.01 + (ball.x>600?0.4:0); t.y+=dy*0.01 + Math.sin(frame*0.02+i)*0.2; });
+  // ballon suit contrôlé
+  if(ball.owner===controlled){
+    ball.x=p.x+18; ball.y=p.y+10;
+    if(Math.abs(mx)+Math.abs(my)>0.1){ ball.x+=mx*6; ball.y+=my*6; }
+  } else {
+    ball.x+=ball.vx; ball.y+=ball.vy; ball.vx*=0.97; ball.vy*=0.97;
+    // reprise
+    team.forEach((t,i)=>{ let d=Math.hypot(t.x-ball.x,t.y-ball.y); if(d<24 && Math.abs(ball.vx)<7){ ball.owner=i; if(i!==controlled){ controlled=i; document.getElementById('playerName').innerText=t.name; } } });
+    // interception adverse
+    opps.forEach(o=>{ let d=Math.hypot(o.x-ball.x,o.y-ball.y); if(d<22){ ball.vx*=-0.5; ball.vy=(Math.random()-0.5)*6; } });
+  }
+
+  // adversaires pressent
+  opps.forEach(o=>{
+    let targetX=ball.x, targetY=ball.y;
+    if(ball.owner>=0){ targetX=team[ball.owner].x; targetY=team[ball.owner].y; }
+    let dx=targetX-o.x, dy=targetY-o.y, d=Math.hypot(dx,dy);
+    if(d>10){ o.x+=dx/d*1.4; o.y+=dy/d*1.4; }
+    // retour à la maison si loin
+    if(ball.x<400){ o.x+= (o.home.x-o.x)*0.005; o.y+= (o.home.y-o.y)*0.005; }
+    // tacle
+    if(d<26 && ball.owner===controlled){ if(Math.random()<0.02){ ball.owner=-1; ball.vx=-4; ball.vy=3; showSkill('😤 TACILE DE CUBARSI !'); beep(150,0.15,0.2); } }
+  });
+  // gardien
+  keeper.y+=keeper.vy; if(keeper.y<210||keeper.y>310) keeper.vy*=-1;
+  if(ball.x>900){ keeper.y+= (ball.y-keeper.y)*0.08; }
+  // gardien arrête
+  if(Math.hypot(ball.x-keeper.x,ball.y-keeper.y)<30 && Math.abs(ball.vx)>3){
+    if(Math.random()<0.5){ ball.vx=-7; ball.vy=(Math.random()-0.5)*8; showSkill('🧤 ARRÊT TER STEGEN !'); beep(250,0.2,0.3); }
+  }
+
+  // BUT
+  if(ball.x>1150 && ball.y>200 && ball.y<320){
+    scoreRMA++; document.getElementById('score').innerText=scoreRMA+' - '+scoreBAR; showSkill('GOOOOAL ! HALA MADRID ! 🤍<br><small>'+p.name+' - '+Math.round(powerVal)+'% puissance</small>'); playCrowd(); beep(600,0.3,0.3);
+    for(let i=0;i<40;i++) particles.push({x:1150,y:260,vx:-Math.random()*9,vy:(Math.random()-0.5)*12,life:50,color:['#fff','#ffd700','#00ff66'][i%3]});
+    ball.x=600; ball.y=260; ball.vx=0; ball.vy=0; ball.owner=0; controlled=0; team.forEach(t=>{ t.x=t.home.x; t.y=t.home.y; }); opps.forEach(o=>{ o.x=o.home.x; o.y=o.home.y; });
+  }
+  if(ball.x>1190){ ball.x=600; ball.y=260; ball.vx=0; ball.vy=0; }
+  if(ball.x<20){ ball.vx*=-1; ball.x=20; }
+  if(ball.y<20||ball.y>500){ ball.vy*=-1; ball.y=Math.max(20,Math.min(500,ball.y)); }
+
+  // caméra FC 26 qui suit le ballon
+  camX=Math.max(0,Math.min(300, ball.x-400));
+}
+
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save(); ctx.translate(-camX,0);
+  // pelouse rayée
+  for(let i=0;i<12;i++){ ctx.fillStyle=i%2?'#2e9a44':'#37b34a'; ctx.fillRect(i*100,0,100,H); }
+  ctx.strokeStyle='rgba(255,255,255,0.9)'; ctx.lineWidth=3;
+  ctx.strokeRect(20,20,1160,480);
+  ctx.beginPath(); ctx.moveTo(600,20); ctx.lineTo(600,500); ctx.stroke();
+  ctx.beginPath(); ctx.arc(600,260,80,0,Math.PI*2); ctx.stroke();
+  ctx.strokeRect(900,120,280,280); ctx.strokeRect(20,120,280,280);
+  ctx.strokeRect(1020,190,160,140); ctx.strokeRect(20,190,160,140);
+  // buts
+  ctx.fillStyle='#fff'; ctx.fillRect(1175,190,25,140); ctx.fillRect(0,190,20,140);
+  // traînées skill
+  trails.forEach((t,ti)=>{ t.x+=t.vx; t.y+=t.vy; t.life--; ctx.fillStyle=t.color; ctx.globalAlpha=t.life/18; ctx.beginPath(); ctx.arc(t.x,t.y,4,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1; if(t.life<=0) trails.splice(ti,1); });
+  // cercles FC 26 sous joueur contrôlé
+  let p=team[controlled];
+  ctx.strokeStyle='#00ff66'; ctx.lineWidth=3; ctx.beginPath(); ctx.ellipse(p.x,p.y+16,18,7,0,0,Math.PI*2); ctx.stroke();
+  ctx.fillStyle='#00ff66'; ctx.beginPath(); ctx.moveTo(p.x,p.y-32); ctx.lineTo(p.x-6,p.y-24); ctx.lineTo(p.x+6,p.y-24); ctx.fill();
+  // joueurs
+  function drawP(x,y,color,num,name,isOpp){
+    ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(x,y+16,13,5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#000'; ctx.fillRect(x-6,y+6,5,10); ctx.fillRect(x+2,y+6,5,10);
+    ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,12,0,Math.PI*2); ctx.fill(); ctx.fillRect(x-12,y,24,10);
+    ctx.fillStyle=color==='#fff'?'#000':'#fff'; ctx.font='bold 9px Arial'; ctx.textAlign='center'; ctx.fillText(num,x,y+4);
+    ctx.fillStyle='#f1c27d'; ctx.beginPath(); ctx.arc(x,y-16,7,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='white'; ctx.font='bold 9px Arial'; ctx.fillText(name,x,y-28);
+  }
+  opps.forEach(o=>drawP(o.x,o.y,'#a50044','4',o.name,true));
+  team.forEach((t,i)=>{ let col=i===controlled?'#fff':'#ddd'; drawP(t.x,t.y,col,t.num,t.name,false); });
+  // gardien
+  drawP(keeper.x,keeper.y,'#ffcc00','1','TER STEGEN',true);
+  // ballon
+  ctx.fillStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.ellipse(ball.x,ball.y+10,9,3,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='white'; ctx.beginPath(); ctx.arc(ball.x,ball.y,10,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#111'; ctx.beginPath(); ctx.arc(ball.x,ball.y,4,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#111'; ctx.beginPath(); ctx.moveTo(ball.x,ball.y-10); ctx.lineTo(ball.x,ball.y-4); ctx.moveTo(ball.x-9,ball.y+3); ctx.lineTo(ball.x-4,ball.y+1); ctx.moveTo(ball.x+9,ball.y+3); ctx.lineTo(ball.x+4,ball.y+1); ctx.stroke();
+  // flèche direction tir quand charge
+  if(powerCharging){
+    ctx.strokeStyle=`hsl(${120-powerVal},100%,50%)`; ctx.lineWidth=4; ctx.setLineDash([8,4]);
+    ctx.beginPath(); ctx.moveTo(ball.x,ball.y); ctx.lineTo(ball.x+80+powerVal*1.2, ball.y+(keeper.y-ball.y)*0.1); ctx.stroke(); ctx.setLineDash([]);
+  }
+  particles.forEach((pt,pi)=>{ pt.x+=pt.vx; pt.y+=pt.vy; pt.vy+=0.2; pt.life--; ctx.fillStyle=pt.color; ctx.globalAlpha=pt.life/50; ctx.fillRect(pt.x,pt.y,4,4); ctx.globalAlpha=1; if(pt.life<=0) particles.splice(pi,1); });
+  ctx.restore();
+  // radar
+  rctx.clearRect(0,0,90,58); rctx.fillStyle='#2e9a44'; rctx.fillRect(0,0,90,58); rctx.strokeStyle='white'; rctx.strokeRect(0,0,90,58);
+  rctx.fillStyle='#fff'; team.forEach(t=>{ rctx.fillRect(t.x/1200*90, t.y/520*58,2,2); });
+  rctx.fillStyle='#ff3366'; opps.forEach(o=>{ rctx.fillRect(o.x/1200*90, o.y/520*58,2,2); });
+  rctx.fillStyle='yellow'; rctx.beginPath(); rctx.arc(ball.x/1200*90, ball.y/520*58,2.5,0,Math.PI*2); rctx.fill();
+  rctx.strokeStyle='rgba(255,255,255,0.5)'; rctx.strokeRect((camX)/1200*90,0,90*900/1200,58);
+}
+
+function loop(){ if(!playing) return; update(); draw(); requestAnimationFrame(loop); }
+
+// CONTROLES FC 26
+let joyActive=false, joyId=null;
+const joyBase=document.getElementById('joyBase'), joyStick=document.getElementById('joyStick');
+function handleJoy(cx,cy){ let r=joyBase.getBoundingClientRect(), ccx=r.left+r.width/2, ccy=r.top+r.height/2; let dx=cx-ccx, dy=cy-ccy, max=35; let d=Math.sqrt(dx*dx+dy*dy); if(d>max){ dx=dx/d*max; dy=dy/d*max; } joyStick.style.left=(32+dx)+'px'; joyStick.style.top=(32+dy)+'px'; joyX=dx/max; joyY=dy/max; }
+function resetJoy(){ joyStick.style.left='32px'; joyStick.style.top='32px'; joyX=0; joyY=0; }
+joyBase.addEventListener('touchstart', e=>{ e.preventDefault(); initAudio(); joyActive=true; joyId=e.touches[0].identifier; handleJoy(e.touches[0].clientX,e.touches[0].clientY); }, {passive:false});
+document.addEventListener('touchmove', e=>{ if(!joyActive) return; for(let t of e.touches){ if(t.identifier===joyId){ e.preventDefault(); handleJoy(t.clientX,t.clientY); } } }, {passive:false});
+document.addEventListener('touchend', ()=>{ if(joyActive){ joyActive=false; resetJoy(); } });
+joyBase.addEventListener('mousedown', e=>{ joyActive=true; handleJoy(e.clientX,e.clientY); });
+document.addEventListener('mousemove', e=>{ if(joyActive) handleJoy(e.clientX,e.clientY); });
+document.addEventListener('mouseup', ()=>{ if(joyActive){ joyActive=false; resetJoy(); } });
+
+// Boutons FC 26 - style manette
+function bindHold(id, down, up){
+  let el=document.getElementById(id);
+  el.addEventListener('touchstart', e=>{ e.preventDefault(); initAudio(); down(); }, {passive:false});
+  el.addEventListener('touchend', e=>{ e.preventDefault(); if(up) up(); });
+  el.addEventListener('mousedown', ()=>{ initAudio(); down(); });
+  el.addEventListener('mouseup', ()=>{ if(up) up(); });
+}
+bindHold('btnShoot', ()=>{ powerCharging=true; powerVal=0; document.getElementById('powerBar').style.display='block'; }, ()=>{ shootBall(); });
+bindHold('btnSprint', ()=>sprinting=true, ()=>sprinting=false);
+bindHold('btnPass', ()=>passBall(false), null);
+bindHold('btnThrough', ()=>passBall(true), null);
+bindHold('btnSkill', ()=>doSkill(), null);
+bindHold('btnSwitch', ()=>switchPlayer(), null);
+
+document.addEventListener('keydown',e=>{
+  keys[e.key]=true; initAudio();
+  if(e.key===' ' && !powerCharging){ e.preventDefault(); powerCharging=true; powerVal=0; document.getElementById('powerBar').style.display='block'; }
+  if(e.key==='Shift') sprinting=true;
+  if(e.key==='x'||e.key==='X') passBall(false);
+  if(e.key==='a' && keys['Shift']) passBall(true);
+  if(e.key==='e'||e.key==='E') doSkill();
+  if(e.key==='q'||e.key==='Q') switchPlayer();
+  if(e.key==='ArrowUp'||e.key==='ArrowDown'||e.key==='ArrowLeft'||e.key==='ArrowRight') e.preventDefault();
+});
+document.addEventListener('keyup',e=>{
+  keys[e.key]=false;
+  if(e.key===' ' && powerCharging) shootBall();
+  if(e.key==='Shift') sprinting=false;
+});
+
+initAudio(); loop();
+</script>
+</body>
+</html>
