@@ -18,3 +18,5 @@ https://tagschatten1.github.io/Spiele/spiel7.html
 https://tagschatten1.github.io/Spiele/spiel8.html
 
 https://tagschatten1.github.io/Spiele/spiel9.html
+
+https://tagschatten1.github.io/Spiele/spielf1.html
